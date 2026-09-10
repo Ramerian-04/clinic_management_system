@@ -1,18 +1,16 @@
-from django.db import models
-
-# Create your models here.
 """
 pharmacist_app/models.py
 Pharmacist's own module: FR-PHM-01 to FR-PHM-05.
 Owns: Medicine (inventory). Dispensing logic (marking a Prescription
 DISPENSED, decrementing stock, writing a BillItem) lives in this app's
-service layer and touches doctor_app.Prescription / receptionist_app.Bill
+service layer and touches cms_doctorapp.Prescription / cms_recepapp.Bill
 via their FKs — no new model needed for that here.
 """
 
-from cms_backendapp.models import generate_prefixed_id
-from django.core.validators import MinValueValidator
 from django.db import models, transaction
+from django.core.validators import MinValueValidator
+
+from cms_backendapp.models import generate_prefixed_id
 
 
 class Medicine(models.Model):
@@ -21,8 +19,10 @@ class Medicine(models.Model):
     generic_name = models.CharField(max_length=100, blank=True, null=True)
     manufacturer = models.CharField(max_length=100, blank=True, null=True)
     category = models.CharField(max_length=50, blank=True, null=True)  # tablet/syrup/injection...
-    cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0,validators=[MinValueValidator(0)])
-    selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=0,validators=[MinValueValidator(0)])
+    cost_price = models.DecimalField(max_digits=10, decimal_places=2, default=0,
+                                      validators=[MinValueValidator(0)])
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2, default=0,
+                                         validators=[MinValueValidator(0)])
     stock_quantity = models.IntegerField(default=0, validators=[MinValueValidator(0)])
     reorder_threshold = models.IntegerField(default=10, validators=[MinValueValidator(0)])
     expiry_date = models.DateField(blank=True, null=True)

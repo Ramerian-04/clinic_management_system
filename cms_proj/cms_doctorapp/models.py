@@ -1,6 +1,3 @@
-from django.db import models
-
-# Create your models here.
 """
 doctor_app/models.py
 Doctor's own module: FR-DOC-01 to FR-DOC-06.
@@ -8,22 +5,23 @@ Owns: Doctor, ConsultationRecord, Prescription, PrescriptionItem, LabTest
 (the lab test *order* — the result belongs to labtech_app).
 """
 
-from cms_backendapp.models import generate_prefixed_id
-from django.core.validators import MinValueValidator
 from django.db import models, transaction
+from django.core.validators import MinValueValidator
+
+from cms_backendapp.models import generate_prefixed_id
 
 
 class Doctor(models.Model):
-    """1:1 extension of cms_backend.Staff — doctor-only fields."""
+    """1:1 extension of cms_backendapp.Staff — doctor-only fields."""
     doctor_id = models.CharField(max_length=15, primary_key=True)
     staff = models.OneToOneField(
-        "cms_backend.Staff", on_delete=models.PROTECT, related_name="doctor_profile"
+        "cms_backendapp.Staff", on_delete=models.PROTECT, related_name="doctor_profile"
     )
     specialization = models.CharField(max_length=100, blank=True, null=True)
     qualification = models.CharField(max_length=100, blank=True, null=True)
     license_number = models.CharField(max_length=50, blank=True, null=True)
     department = models.ForeignKey(
-        "cms_backend.Department", on_delete=models.SET_NULL, null=True, blank=True,
+        "cms_backendapp.Department", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="doctors",
     )
     consultation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0,
@@ -48,11 +46,11 @@ class Doctor(models.Model):
 class ConsultationRecord(models.Model):
     record_id = models.CharField(max_length=15, primary_key=True)
     patient = models.ForeignKey(
-        "receptionist_app.Patient", on_delete=models.PROTECT, related_name="consultation_records"
+        "cms_recepapp.Patient", on_delete=models.PROTECT, related_name="consultation_records"
     )
     doctor = models.ForeignKey(Doctor, on_delete=models.PROTECT, related_name="consultation_records")
     appointment = models.ForeignKey(
-        "receptionist_app.Appointment", on_delete=models.SET_NULL, null=True, blank=True,
+        "cms_recepapp.Appointment", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="consultation_records",
     )
     visit_date = models.DateField()
@@ -85,11 +83,11 @@ class Prescription(models.Model):
 
     prescription_id = models.CharField(max_length=15, primary_key=True)
     patient = models.ForeignKey(
-        "receptionist_app.Patient", on_delete=models.PROTECT, related_name="prescriptions"
+        "cms_recepapp.Patient", on_delete=models.PROTECT, related_name="prescriptions"
     )
     doctor = models.ForeignKey(Doctor, on_delete=models.PROTECT, related_name="prescriptions")
     appointment = models.ForeignKey(
-        "receptionist_app.Appointment", on_delete=models.SET_NULL, null=True, blank=True,
+        "cms_recepapp.Appointment", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="prescriptions",
     )
     date_issued = models.DateField()
@@ -118,7 +116,7 @@ class PrescriptionItem(models.Model):
     item_id = models.CharField(max_length=15, primary_key=True)
     prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE, related_name="items")
     medicine = models.ForeignKey(
-        "pharmacist_app.Medicine", on_delete=models.PROTECT, related_name="prescription_items"
+        "cms_pharmapp.Medicine", on_delete=models.PROTECT, related_name="prescription_items"
     )
     dosage = models.CharField(max_length=50, blank=True, null=True)  # e.g. 1-0-1
     duration_days = models.IntegerField(blank=True, null=True, validators=[MinValueValidator(1)])
@@ -142,7 +140,7 @@ class PrescriptionItem(models.Model):
 
 
 class LabTest(models.Model):
-    """The lab test *order* raised by a doctor. The result lives in labtech_app.LabTestResult."""
+    """The lab test *order* raised by a doctor. The result lives in cms_labapp.LabTestResult."""
     class Status(models.TextChoices):
         ORDERED = "ORDERED", "Ordered"
         IN_PROGRESS = "IN_PROGRESS", "In progress"
@@ -150,15 +148,15 @@ class LabTest(models.Model):
 
     test_id = models.CharField(max_length=15, primary_key=True)
     patient = models.ForeignKey(
-        "receptionist_app.Patient", on_delete=models.PROTECT, related_name="lab_tests"
+        "cms_recepapp.Patient", on_delete=models.PROTECT, related_name="lab_tests"
     )
     doctor = models.ForeignKey(Doctor, on_delete=models.PROTECT, related_name="lab_tests_ordered")
     appointment = models.ForeignKey(
-        "receptionist_app.Appointment", on_delete=models.SET_NULL, null=True, blank=True,
+        "cms_recepapp.Appointment", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="lab_tests",
     )
     test_catalog = models.ForeignKey(
-        "cms_backend.LabTestCatalog", on_delete=models.PROTECT, related_name="lab_tests"
+        "cms_backendapp.LabTestCatalog", on_delete=models.PROTECT, related_name="lab_tests"
     )
     ordered_date = models.DateField()
     status = models.CharField(max_length=15, choices=Status.choices, default=Status.ORDERED)

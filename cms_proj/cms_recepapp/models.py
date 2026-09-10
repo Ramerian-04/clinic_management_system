@@ -1,15 +1,13 @@
-from django.db import models
-
-# Create your models here.
 """
 receptionist_app/models.py
 Receptionist's own module: FR-REC-01 to FR-REC-07.
 Owns: Patient, Appointment, Bill, BillItem, Payment.
 """
 
-from cms_backendapp.models import generate_prefixed_id
-from django.core.validators import MinValueValidator
 from django.db import models, transaction
+from django.core.validators import MinValueValidator
+
+from cms_backendapp.models import generate_prefixed_id
 
 
 class Patient(models.Model):
@@ -29,7 +27,7 @@ class Patient(models.Model):
     emergency_contact = models.CharField(max_length=15, blank=True, null=True)
     allergies = models.TextField(blank=True, null=True)
     assigned_doctor = models.ForeignKey(
-        "doctor_app.Doctor", on_delete=models.SET_NULL, null=True, blank=True,
+        "cms_doctorapp.Doctor", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="patients",
     )
     registered_on = models.DateField(blank=True, null=True)
@@ -63,13 +61,13 @@ class Appointment(models.Model):
     appointment_id = models.CharField(max_length=15, primary_key=True)
     patient = models.ForeignKey(Patient, on_delete=models.PROTECT, related_name="appointments")
     doctor = models.ForeignKey(
-        "doctor_app.Doctor", on_delete=models.PROTECT, related_name="appointments"
+        "cms_doctorapp.Doctor", on_delete=models.PROTECT, related_name="appointments"
     )
     appointment_date = models.DateField()
     time_slot = models.CharField(max_length=20)
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.SCHEDULED)
     created_by = models.ForeignKey(
-        "cms_backend.Staff", on_delete=models.SET_NULL, null=True, blank=True,
+        "cms_backendapp.Staff", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="appointments_created",
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -117,10 +115,12 @@ class Bill(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0,
                                         validators=[MinValueValidator(0)])
     # Cache kept in sync by Payment.save() below — never set this directly elsewhere.
-    amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0,validators=[MinValueValidator(0)])
-    payment_status = models.CharField(max_length=10, choices=PaymentStatus.choices,default=PaymentStatus.UNPAID)
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0,
+                                       validators=[MinValueValidator(0)])
+    payment_status = models.CharField(max_length=10, choices=PaymentStatus.choices,
+                                       default=PaymentStatus.UNPAID)
     generated_by = models.ForeignKey(
-        "cms_backend.Staff", on_delete=models.SET_NULL, null=True, blank=True,
+        "cms_backendapp.Staff", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="bills_generated",
     )
     created_at = models.DateTimeField(auto_now_add=True)
@@ -163,7 +163,8 @@ class BillItem(models.Model):
     # point at rows in different tables/apps depending on item_type.
     source_id = models.CharField(max_length=15, blank=True, null=True)
     description = models.CharField(max_length=200)  # e.g. "Consultation Fee", "Medicine - X"
-    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0,validators=[MinValueValidator(0)])
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0,
+                                  validators=[MinValueValidator(0)])
 
     class Meta:
         db_table = "bill_items"
@@ -188,11 +189,12 @@ class Payment(models.Model):
 
     payment_id = models.CharField(max_length=15, primary_key=True)
     bill = models.ForeignKey(Bill, on_delete=models.CASCADE, related_name="payments")
-    amount_paid = models.DecimalField(max_digits=10, decimal_places=2,validators=[MinValueValidator(0.01)])
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2,
+                                       validators=[MinValueValidator(0.01)])
     payment_date = models.DateField()
     payment_method = models.CharField(max_length=10, choices=Method.choices, default=Method.CASH)
     received_by = models.ForeignKey(
-        "cms_backend.Staff", on_delete=models.SET_NULL, null=True, blank=True,
+        "cms_backendapp.Staff", on_delete=models.SET_NULL, null=True, blank=True,
         related_name="payments_received",
     )
     created_at = models.DateTimeField(auto_now_add=True)

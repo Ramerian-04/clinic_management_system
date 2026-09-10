@@ -4,14 +4,15 @@ Shared / general data used across all five role apps: the ID-sequence
 counter, Department & Role master data, and Staff/User (identity + login).
 """
 
-from django.contrib.auth.hashers import check_password, make_password
-from django.core.validators import MinValueValidator
 from django.db import models, transaction
+from django.core.validators import MinValueValidator
+from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
+
 
 # ---------------------------------------------------------------------
 # ID generation helper — mirrors the id_sequences table / trigger logic.
-# Imported by every other app: `from cms_backend.models import generate_prefixed_id`
+# Imported by every other app: `from cms_backendapp.models import generate_prefixed_id`
 # ---------------------------------------------------------------------
 
 class IdSequence(models.Model):
@@ -99,7 +100,8 @@ class LabTestCatalog(models.Model):
         Department, on_delete=models.SET_NULL, null=True, blank=True,
         related_name="lab_test_types",
     )
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0,validators=[MinValueValidator(0)])
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0,
+                                 validators=[MinValueValidator(0)])
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
